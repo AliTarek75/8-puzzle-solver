@@ -6,34 +6,36 @@ def ids(board):
     Iterative deepening search: depth-first search with a depth limit
 
     @param board: the starting board
-    @return: the solved board
+    @return: (solved_board, nodes_expanded, max_depth) or False if there is no solution
     """
     max_depth = 0
+    nodes_expanded = 0
+    
     while True:
         stack = []
         stack.append((board, 0))    # (board, depth)
 
-        # Store the visited grids as a dict with the depth as value
+        # Store the vistied grids as a dict with the depth as value
         # so it can check that if it finds the same node with a lower depth
         visited = {board.grid : 0}
         needs_more = False
 
         while stack:
             brd, depth = stack.pop()
+            nodes_expanded += 1
 
-            # A shorter path was already found and was popped or currently setting in the stack
+            # A shorter path was already found and was popped or currently sitting in the stack
             # since repetition can occur in the stack since we insert a repeated node if it has a lower depth
             if depth > visited[brd.grid]:
                 continue 
 
             if brd.check_solved():
-                return brd
+                return (brd, nodes_expanded, max_depth)
 
             new_depth = depth+1
 
             for state in brd.get_next_states():
-                
-                # Checkes if the new node is <= max_depth (check is only useful in the case of a new node not in vistied dict)
+                # Checkes if the new node is <= max_depth (check is only useful in the case of a new node not in visited dict)
                 if new_depth <= max_depth:
 
                     # Push if new or if we reached it faster than before 
@@ -42,15 +44,15 @@ def ids(board):
                         visited[state.grid] = new_depth
                         stack.append((state, new_depth))
 
-                # else it means that the new node is important and we need to do an extra depth to reach it
+                # else (if new) it means that the node is important and we need to do an extra depth to reach it
                 elif state.grid not in visited:
                     needs_more = True
 
         if needs_more:
             max_depth += 1
-            needs_more = False
         else:
             break
+    return False
 
 
 def bfs(board):
@@ -61,20 +63,25 @@ def bfs(board):
     @return: the solved board with the fewest moves (optimal) or False if there is no solution
     """
     q = deque()
-    q.append(board)
+    q.append((board, 0))    # (board, depth)
+    nodes_expanded = 0
+    max_depth = 0
 
     visited = set()
     visited.add(board.grid)
 
     while q:
-        brd = q.popleft()
+        brd, depth = q.popleft()
+        nodes_expanded += 1
+        max_depth = max(max_depth, depth)
+
         if (brd.check_solved()):
-            return brd
+            return (brd, nodes_expanded, max_depth)
 
         for state in brd.get_next_states():
             if state.grid not in visited:
                 visited.add(state.grid)
-                q.append(state)
+                q.append((state, depth+1))
     return False
 
 def dfs(board):
@@ -82,21 +89,27 @@ def dfs(board):
     Depth-first search: keeps going down one path before trying others
 
     @param board: the starting board
-    @return: a solved board (any solution, not necessarily optimal) or False if there is no solution
+    @return: (solved_board, nodes_expanded, max_depth) or False if there is no solution
     """
 
-    stack = [board]
+    stack = []
+    stack.append((board, 0))    # (board, depth)
     visited = {board.grid}
+    nodes_expanded = 0
+    max_depth = 0
 
     while stack:
-        brd = stack.pop()
+        brd, depth = stack.pop()
+        nodes_expanded += 1
+        max_depth = max(max_depth, depth)
+
         if (brd.check_solved()):
-            return brd
+            return (brd, nodes_expanded, max_depth)
 
         for state in brd.get_next_states():
             if state.grid not in visited:
                 visited.add(state.grid)
-                stack.append(state)
+                stack.append((state, depth+1))
     return False
 
 
@@ -107,29 +120,37 @@ def astar(board, heuristic):
 
     @param board: the starting board
     @param heuristic: estimated moves to the goal
-    @return: the solved board or False if there is no solution
+    @return: (solved_board, nodes_expanded, max_depth) or False if there is no solution
     """
     q = PriorityQueue()
-    id = 1                                  # tie breaker so the queue never has to compare boards
-    q.put((heuristic(board), id, 0, board)) # (cost, tie, depth, board)
-    best_depth = {board.grid: 0}
+    tie_breaker = 1                                  # Tie breaker so the queue never has to compare boards
+    q.put((heuristic(board), tie_breaker, 0, board)) # (tota_score, tie, cost, board)
+
+    # Store the visited grids as a dict with the cost (same thing as depth)
+    # so it can check that if it finds the same node with a lower depth
+    visited = {board.grid: 0}
+    nodes_expanded = 0
+    max_depth = 0
 
     while not q.empty():
-        _, _, depth, brd = q.get()
+        _, _, cost, brd = q.get()
+        nodes_expanded += 1
+        max_depth = max(max_depth, cost)
 
-        # a better path to this state was found
-        if depth != best_depth[brd.grid]:
+        # A better path was already found (same thing as the IDS code)
+        if cost != visited[brd.grid]:
             continue
 
         if brd.check_solved():
-            return brd
+            return (brd, nodes_expanded, max_depth)
 
-        new_depth = depth + 1
+        new_cost = cost + 1
         for state in brd.get_next_states():
             # only queue it if this path is shorter than any seen before
-            if ((state.grid not in best_depth) or (new_depth < best_depth[state.grid])):
-                id += 1
-                best_depth[state.grid] = new_depth
-                new_cost = new_depth + heuristic(state)
-                q.put((new_cost, id,new_depth, state))
+            # we push repeated nodes and skip the old ones (same thing as the IDS code)
+            if state.grid not in visited or new_cost < visited[state.grid]:
+                tie_breaker += 1
+                visited[state.grid] = new_cost
+                new_total = new_cost + heuristic(state)
+                q.put((new_total, tie_breaker, new_cost, state))
     return False
