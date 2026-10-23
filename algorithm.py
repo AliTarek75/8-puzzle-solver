@@ -13,11 +13,16 @@ def ids(board):
         stack = []
         stack.append((board, 0))    # (board, depth)
 
+        # Store the visited grids as a dict with the depth as value
+        # so it can check that if it finds the same node with a lower depth
         visited = {board.grid : 0}
+        needs_more = False
 
         while stack:
             brd, depth = stack.pop()
-            # a shorter path to this state was found later
+
+            # A shorter path was already found and was popped or currently setting in the stack
+            # since repetition can occur in the stack since we insert a repeated node if it has a lower depth
             if depth > visited[brd.grid]:
                 continue 
 
@@ -25,14 +30,27 @@ def ids(board):
                 return brd
 
             new_depth = depth+1
-            if new_depth<=max_depth:
-                for state in brd.get_next_states():
-                    # push if new or if we reached it faster than before
-                    if ((state.grid not in visited ) or (visited[state.grid]>new_depth)):
+
+            for state in brd.get_next_states():
+                
+                # Checkes if the new node is <= max_depth (check is only useful in the case of a new node not in vistied dict)
+                if new_depth <= max_depth:
+
+                    # Push if new or if we reached it faster than before 
+                    # instead of updating the node in the stack, we push them both and skip the higher depth one
+                    if state.grid not in visited or visited[state.grid] > new_depth:
                         visited[state.grid] = new_depth
                         stack.append((state, new_depth))
 
-        max_depth += 1
+                # else it means that the new node is important and we need to do an extra depth to reach it
+                elif state.grid not in visited:
+                    needs_more = True
+
+        if needs_more:
+            max_depth += 1
+            needs_more = False
+        else:
+            break
 
 
 def bfs(board):
