@@ -43,7 +43,7 @@ def ids(board):
 
         while stack:
             brd, depth = stack.pop()
-            nodes_expanded += 1
+            new_depth = depth+1
 
             # A shorter path was already found and was popped or currently sitting in the stack
             # since repetition can occur in the stack since we insert a repeated node if it has a lower depth
@@ -53,17 +53,18 @@ def ids(board):
             if brd.check_solved():
                 return (brd, nodes_expanded, max_depth)
 
-            new_depth = depth+1
+            # The next nodes after the nodes we are expanding are after the depth limit, so we skip them
+            if new_depth > max_depth:
+                continue
+
+            nodes_expanded += 1
 
             for state in brd.get_next_states():
-                # Checkes if the new node is <= max_depth (check is only useful in the case of a new node not in visited dict)
-                if new_depth <= max_depth:
-
-                    # Push if new or if we reached it faster than before 
-                    # instead of updating the node in the stack, we push them both and skip the higher depth one
-                    if state.grid not in visited or visited[state.grid] > new_depth:
-                        visited[state.grid] = new_depth
-                        stack.append((state, new_depth))
+                # Push if new or if we reached it faster than before 
+                # instead of updating the node in the stack, we push them both and skip the higher depth one
+                if state.grid not in visited or visited[state.grid] > new_depth:
+                    visited[state.grid] = new_depth
+                    stack.append((state, new_depth))
         max_depth += 1
 
 def bfs(board):
@@ -83,11 +84,12 @@ def bfs(board):
 
     while q:
         brd, depth = q.popleft()
-        nodes_expanded += 1
         max_depth = max(max_depth, depth)
 
         if (brd.check_solved()):
             return (brd, nodes_expanded, max_depth)
+        
+        nodes_expanded += 1
 
         for state in brd.get_next_states():
             if state.grid not in visited:
@@ -111,11 +113,12 @@ def dfs(board):
 
     while stack:
         brd, depth = stack.pop()
-        nodes_expanded += 1
         max_depth = max(max_depth, depth)
 
         if (brd.check_solved()):
             return (brd, nodes_expanded, max_depth)
+        
+        nodes_expanded += 1
 
         for state in brd.get_next_states():
             if state.grid not in visited:
@@ -145,15 +148,17 @@ def astar(board, heuristic):
 
     while not q.empty():
         _, _, cost, brd = q.get()
-        nodes_expanded += 1
-        max_depth = max(max_depth, cost)
 
         # A better path was already found (same thing as the IDS code)
         if cost != visited[brd.grid]:
             continue
 
+        max_depth = max(max_depth, cost)
+
         if brd.check_solved():
             return (brd, nodes_expanded, max_depth)
+        
+        nodes_expanded += 1
 
         new_cost = cost + 1
         for state in brd.get_next_states():
