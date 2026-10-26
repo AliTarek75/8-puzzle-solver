@@ -29,15 +29,11 @@ class Board:
 
                 exist.add(x)
         
-    def print_board(self):
-        for row in self.grid:
-            for i in range(3):
-                print(row[i], end=' ')
-            print() 
-        
-    # Get all the allowed actions from the current state
+    # Get all the allowed actions from the current state (only used as a helper function with get_next_states)
     def get_moves(self):
-
+        """
+        Calculates all legally allowed directions the empty space can move from its current position.
+        """
         # Direction list: (dy, dx) -> (row_change, col_change)
         # (-1, 0): UP,  (0, -1): LEFT,  (1, 0): DOWN,  (0, 1): RIGHT
         directions = [
@@ -57,9 +53,21 @@ class Board:
                 allowed.append((dy, dx)) 
 
         return allowed
+
+    def print_board(self):
+        """
+        Prints the grid to the console for testing and debugging.
+        """
+        for row in self.grid:
+            for i in range(3):
+                print(row[i], end=' ')
+            print()
     
     # Get all the next states from the current state
     def get_next_states(self):
+        """
+        Generates a list of all valid adjacent Board states resulting from legal moves.
+        """
         next_states = []
         allowed = self.get_moves()
 
@@ -79,8 +87,10 @@ class Board:
 
         return next_states
     
-    # Goal check function
     def check_solved(self):
+        """
+        Checks if the current board grid perfectly matches the target goal configuration.
+        """
         target = (
             (0, 1, 2),
             (3, 4, 5),
