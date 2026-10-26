@@ -13,6 +13,9 @@ goal_pos = {
 }
 
 def manhattan(board):
+    """
+    Calculates the total Manhattan distance of all tiles from their goal positions.
+    """
     total = 0
     for i in range(3):
         for j in range(3):
@@ -25,6 +28,9 @@ def manhattan(board):
 
 
 def euclidean(board):
+    """
+    Calculates the total Euclidean distance of all tiles from their goal positions.
+    """
     total = 0
     for i in range(3):
         for j in range(3):

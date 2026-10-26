@@ -1,12 +1,34 @@
 from collections import deque
 from queue import PriorityQueue
 
+def solvable(board):
+    """
+    Determines if a board configuration is solvable based on its inversion count.
+    """
+    # Flatten the grid into a single list, skipping the empty space (0)
+    flat = []
+    inversions = 0
+
+    for row in board.grid:
+        for val in row:
+            if val != 0:
+                flat.append(val)
+    
+    # Compare each number with every number that comes after it, total is 8 since we removed 0
+    for i in range(8):
+        for j in range(i + 1, 8):
+            if flat[i] > flat[j]:
+                inversions += 1
+                
+    return inversions % 2 == 0
+
 def ids(board):
     """
     Iterative deepening search: depth-first search with a depth limit
+    solution must be checked first before running this, or else it will result in an infinite loop
 
     @param board: the starting board
-    @return: (solved_board, nodes_expanded, max_depth) or False if there is no solution
+    @return: (solved_board, nodes_expanded, max_depth)
     """
     max_depth = 0
     nodes_expanded = 0
@@ -18,7 +40,6 @@ def ids(board):
         # Store the vistied grids as a dict with the depth as value
         # so it can check that if it finds the same node with a lower depth
         visited = {board.grid : 0}
-        needs_more = False
 
         while stack:
             brd, depth = stack.pop()
@@ -43,17 +64,7 @@ def ids(board):
                     if state.grid not in visited or visited[state.grid] > new_depth:
                         visited[state.grid] = new_depth
                         stack.append((state, new_depth))
-
-                # else (if new) it means that the node is important and we need to do an extra depth to reach it
-                elif state.grid not in visited:
-                    needs_more = True
-
-        if needs_more:
-            max_depth += 1
-        else:
-            break
-    return False
-
+        max_depth += 1
 
 def bfs(board):
     """
@@ -82,11 +93,11 @@ def bfs(board):
             if state.grid not in visited:
                 visited.add(state.grid)
                 q.append((state, depth+1))
-    return False
+    return (False, 0, 0)
 
 def dfs(board):
     """
-    Depth-first search: keeps going down one path before trying others
+    Depth-first search keeps going down one path before trying others
 
     @param board: the starting board
     @return: (solved_board, nodes_expanded, max_depth) or False if there is no solution
@@ -110,7 +121,7 @@ def dfs(board):
             if state.grid not in visited:
                 visited.add(state.grid)
                 stack.append((state, depth+1))
-    return False
+    return (False, 0, 0)
 
 
 def astar(board, heuristic):
@@ -153,4 +164,4 @@ def astar(board, heuristic):
                 visited[state.grid] = new_cost
                 new_total = new_cost + heuristic(state)
                 q.put((new_total, tie_breaker, new_cost, state))
-    return False
+    return (False, 0, 0)
