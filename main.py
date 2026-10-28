@@ -168,8 +168,8 @@ class GUI:
         box = event.widget
         char = event.char
 
-        # ignore tab and continue with default behaviour
-        if event.keysym == "Tab":
+        # ignore Tab or Enter and continue with default behaviour
+        if event.keysym == "Tab" or event.keysym == "Return":
             return
 
         # arrow key navigation between cells
